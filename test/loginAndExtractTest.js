@@ -29,8 +29,9 @@ const fetchUserInfo = async (token) => {
       }
     });
 
-    console.log('User Info:', response.data);
-  } catch (error) {
+    
+    logUserResponse(response.data);
+} catch (error) {
     console.error('Error fetching user info:', error.response ? error.response.data : error.message);
   }
 };
@@ -42,10 +43,36 @@ const run = async () => {
     const refreshToken = data.refreshToken;
     const accessToken = data.accessToken;
 
-    await fetchUserInfo(accessToken); //Fetch user info with the acess token
+    await fetchUserInfo(accessToken).data; //Fetch user info with the acess token
+    
   } catch (error) {
     console.error('An error occurred during the process:', error.message);
   }
 };
+
+const logUserResponse = (users) => {
+    // Check if users is valid and contains data
+    if (!Array.isArray(users) || users.length === 0) {
+      console.log('No users found or invalid data format.');
+      return;
+    }
+  
+    // Log detailed user information
+    users.forEach(user => {
+      console.log(`User: ${user.username}, ID: ${user.id}`);
+      
+      if (user.tokens && user.tokens.length > 0) {
+        
+        console.log('Tokens:');
+        user.tokens.forEach(token => {
+          console.log(`  - Token ID: ${token.id}, Quantity: ${token.quantity}, Establishment ID: ${token.establishmentId}, Created At: ${token.createdAt}`);
+        });
+      } else {
+        console.log('  No tokens found for this user.');
+      }
+    });
+  };
+  
+  
 
 run();

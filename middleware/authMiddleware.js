@@ -4,24 +4,23 @@ const secretKey = config.accessKey;
 
 
 exports.authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-  
+    if (!token) return res.status(401).json({ message: 'Token missing' });
 
-  if (!token) return res.status(401).json({ message: 'Token missing' });
+    jwt.verify(token, secretKey, (err, user) => {
+        if (err) return res.status(403).json({ message: 'Invalid token' });
 
+        // Token is valid, attach user info to the request object
+        console.log("Valid token, attaching user");
+        console.log("user:",user);
+        req.user = user;
 
-  jwt.verify(token, secretKey, (err, user) => {
-    if (err) {
-      console.log("Token verification error:", err);  
-      return res.status(403).json({ message: 'Invalid token' });
-    }
-    req.user = user;  
-    next();
-  });
-
+        next(); 
+    });
 };
+
 
 exports.authorizeRoles = (...roles) => {
   return (req, res, next) => {

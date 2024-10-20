@@ -1,4 +1,5 @@
-const { User } = require('../models/user');
+
+const {User,Token,Establishment} = require('../models/relations')
 const bcrypt = require('bcryptjs');  // For hashing passwords
 const jwt = require('jsonwebtoken');  // For JWT tokens
 const config = require('../auth/auth.json');
@@ -7,15 +8,49 @@ const refreshKey = config.refreshKey;
 
 
 
-// Get all users
+// Get all users info
 const getUsers = async (req, res) => {
-  try {
-    const users = await User.findAll();
-    res.status(200).json(users);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch users' });
-  }
-};
+    try {
+      const users = await User.findAll({
+        attributes: ['id', 'username', 'email', 'role', 'createdAt', 'updatedAt'],
+        include: [{
+          model: Token,
+          attributes: ['id', 'quantity', 'EstablishmentId', 'createdAt', 'updatedAt']
+        }]
+      });
+  
+      const formattedUsers = users.map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        tokens: user.Tokens.map(token => ({
+          id: token.id,
+          quantity: token.quantity,
+          establishmentId: token.EstablishmentId,
+          createdAt: token.createdAt,
+          updatedAt: token.updatedAt
+        }))
+      }));
+  
+      // Log detailed information
+      console.log('User Info:');
+      formattedUsers.forEach(user => {
+        console.log(`User: ${user.username}, Tokens:`);
+        user.tokens.forEach(token => {
+          console.log(`  - Token ID: ${token.id}, Quantity: ${token.quantity}, Establishment ID: ${token.establishmentId}, Created At: ${token.createdAt}`);
+        });
+      });
+  
+      res.status(200).json(formattedUsers);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  };
+  
+  
 
 // Create a new user with hashed password
 const createUser = async (req, res) => {
@@ -76,4 +111,31 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, createUser, loginUser };
+  
+ 
+
+const getUserTokensForEstablishment = async (req, res) => {
+    const { establishmentId } = req.params;
+    const userId = req.user.userId; 
+   
+    if (!userId || !establishmentId) {
+      return res.status(400).json({ message: 'User ID and Establishment ID are required' });
+    }
+  
+    try {
+      const tokens = await Token.findAll({
+        where: {
+          UserId: userId,  // Use the userId from request parameters
+          EstablishmentId: establishmentId
+        },
+        include: [Establishment] // Include the Establishment model
+      });
+  
+      res.json(tokens);
+    } catch (error) {
+      console.error('Error fetching tokens:', error);
+      res.status(500).json({ message: 'Error fetching tokens', error });
+    }
+  };
+  
+module.exports = { getUsers, createUser, loginUser ,getUserTokensForEstablishment};

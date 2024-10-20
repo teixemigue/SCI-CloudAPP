@@ -1,4 +1,7 @@
-const { sequelize, User } = require('./models/user');
+const { sequelize} = require('./dB/database');
+const {User} = require('./models/user')
+const { Token} = require('./models/token');
+const {Establishment} =require('./models/establishment');
 const bcrypt = require('bcryptjs');
 
 const seedDatabase = async () => {
@@ -11,26 +14,57 @@ const seedDatabase = async () => {
     const hashedPassword2 = await bcrypt.hash('userpass', 10); 
 
     console.log('Hashed password for Admin:', hashedPassword1);
-    
 
     // Insert some initial data with hashed passwords and roles
-    await User.bulkCreate([
+    const users = await User.bulkCreate([
       {
         username: 'admin',
         email: 'admin@example.com',
-        password: hashedPassword1,  // Hashed password
-        role: 'admin'  // Assign 'admin' role to Alice
+        password: hashedPassword1,  
+        role: 'admin'  
       },
       {
         username: 'user',
         email: 'user@example.com',
-        password: hashedPassword2,  // Hashed password
-        role: 'user'  // Assign 'user' role to Bob
+        password: hashedPassword2, 
+        role: 'user'  
+      }
+    ]);
+
+    const adminUser = users[0];  
+    const regularUser = users[1]; 
+
+    // Insert some initial establishments
+    const establishments = await Establishment.bulkCreate([
+      {
+        name: 'Beer Station A',
+        address: 'Street of siga siga'
+      },
+      {
+        name: 'Beer Station B',
+        address: 'Street of good life'
+      }
+    ]);
+
+    const establishmentA = establishments[0];  // First establishment
+    const establishmentB = establishments[1];  // Second establishment
+
+    // Insert some initial tokens for the users and establishments
+    await Token.bulkCreate([
+      {
+        quantity: 100,
+        UserId: adminUser.id, 
+        EstablishmentId: establishmentA.id  // Establishment A
+      },
+      {
+        quantity: 50,
+        UserId: regularUser.id, 
+        EstablishmentId: establishmentB.id  // Establishment B
       }
     ]);
 
     console.log('Database seeded successfully!');
-    process.exit(0);  // Exit the process successfully
+    process.exit(0); 
   } catch (err) {
     console.error('Error seeding the database:', err);
     process.exit(1);  // Exit with failure

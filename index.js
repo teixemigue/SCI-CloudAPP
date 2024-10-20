@@ -1,4 +1,4 @@
-const { sequelize } = require('./models/user');
+const { sequelize } = require('./dB/database');
 const express = require('express');
 const bodyParser = require('body-parser');
 const userRoutes = require('./routes/userRoutes');
@@ -6,12 +6,8 @@ const tokenRoutes = require('./routes/tokenRoutes')
 
 
 
+const PORT = process.env.PORT || 3000;
 
-sequelize.sync({ force: false }).then(() => {
-  console.log('Database synced');
-}).catch((err) => {
-  console.log('Error syncing database: ', err);
-});
 
 
 
@@ -19,11 +15,31 @@ sequelize.sync({ force: false }).then(() => {
 const app = express();
 app.use(bodyParser.json());  // Parse JSON request bodies
 
+
+
+
 // Routes
 app.use('/', userRoutes);
 app.use('/token',tokenRoutes);
 // Start the server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+
+
+const startServer = async () => {
+    try {
+      await sequelize.authenticate(); // Test the connection
+      console.log('Database connection established successfully.');
+      
+      await sequelize.sync(); // Sync models
+      console.log('Models synced successfully.');
+  
+      app.listen(PORT, () => {
+        console.log(`Server is running on ${PORT}`);
+      });
+    } catch (error) {
+      console.error('Unable to connect to the database:', error);
+    }
+  };
+
+
+startServer();

@@ -1,29 +1,31 @@
-const { Sequelize, DataTypes } = require('sequelize');
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: './database.sqlite' // Database location
-});
+const { DataTypes } = require('sequelize');
+const {sequelize} = require('../dB/database'); // Adjust path as necessary
 
+
+// Define the User model
 const User = sequelize.define('User', {
   username: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique:true
+    unique: true
   },
   email: {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true
   },
-  password: {  // Add password field
+  password: {  
     type: DataTypes.STRING,
     allowNull: false
   },
-  role: {  // Add role field (for role-based access control)
+  role: {  
     type: DataTypes.STRING,
     allowNull: false,
-    defaultValue: 'user'  // Default role is 'user'
+    defaultValue: 'user'  
   }
 });
 
-module.exports = { sequelize, User };
+
+
+
+module.exports = { User };

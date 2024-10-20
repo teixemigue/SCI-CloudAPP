@@ -1,5 +1,5 @@
 const express = require('express');
-const { getUsers, createUser, loginUser } = require('../controllers/userController');
+const { getUsers, createUser, loginUser, getUserTokensForEstablishment } = require('../controllers/userController');
 const { authenticateToken, authorizeRoles } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -10,6 +10,6 @@ router.post('/login', loginUser);
 
 // Protected routes (token required)
 router.get('/info/users', authenticateToken, authorizeRoles('admin'), getUsers);
-
+router.get('/user/establishment/:establishmentId', authenticateToken, getUserTokensForEstablishment);
 
 module.exports = router;
