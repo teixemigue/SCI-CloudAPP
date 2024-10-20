@@ -10,6 +10,14 @@ const Establishment = sequelize.define('Establishment', {
   address: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  OwnerId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users', 
+      key: 'id'
+    }
   }
 });
 

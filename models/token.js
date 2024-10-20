@@ -7,11 +7,15 @@ const Token = sequelize.define('Token', {
     type: DataTypes.INTEGER,
     allowNull: false
   },
+  status:{
+    type:DataTypes.STRING,
+    allowNull: false
+  },
   UserId: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Users', // Assuming your user table is named 'Users'
+      model: 'Users', 
       key: 'id'
     }
   },
@@ -19,7 +23,7 @@ const Token = sequelize.define('Token', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Establishments', // Assuming your establishment table is named 'Establishments'
+      model: 'Establishments', 
       key: 'id'
     }
   }

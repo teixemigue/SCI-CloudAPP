@@ -2,6 +2,7 @@ const { sequelize} = require('./dB/database');
 const {User} = require('./models/user')
 const { Token} = require('./models/token');
 const {Establishment} =require('./models/establishment');
+const {Tank} = require('./models/tank');
 const bcrypt = require('bcryptjs');
 
 const seedDatabase = async () => {
@@ -38,11 +39,13 @@ const seedDatabase = async () => {
     const establishments = await Establishment.bulkCreate([
       {
         name: 'Beer Station A',
-        address: 'Street of siga siga'
+        address: 'Street of siga siga',
+        OwnerId: adminUser.id
       },
       {
         name: 'Beer Station B',
-        address: 'Street of good life'
+        address: 'Street of good life',
+        OwnerId: adminUser.id
       }
     ]);
 
@@ -53,15 +56,34 @@ const seedDatabase = async () => {
     await Token.bulkCreate([
       {
         quantity: 100,
+        status: 'Device',
         UserId: adminUser.id, 
         EstablishmentId: establishmentA.id  // Establishment A
       },
       {
         quantity: 50,
+        status: 'Cup',
         UserId: regularUser.id, 
-        EstablishmentId: establishmentB.id  // Establishment B
+        EstablishmentId: establishmentA.id  // Establishment B
       }
     ]);
+
+    await Tank.bulkCreate([
+        {
+          level: 1.0,
+          beersServed: 0,
+          beerPressure: 1, 
+          Temp: 2.0,
+          EstablishmentId: establishmentA.id
+        },
+        {
+          level: 2.0,
+          beersServed: 2,
+          beerPressure: 2, 
+          Temp: 20.0,
+          EstablishmentId: establishmentB.id
+        }
+      ]);
 
     console.log('Database seeded successfully!');
     process.exit(0); 

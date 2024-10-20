@@ -1,5 +1,5 @@
 
-const {User,Token,Establishment} = require('../models/relations')
+const {User,Token,Establishment,Tank} = require('../models/relations')
 const bcrypt = require('bcryptjs');  // For hashing passwords
 const jwt = require('jsonwebtoken');  // For JWT tokens
 const config = require('../auth/auth.json');
@@ -111,6 +111,29 @@ const loginUser = async (req, res) => {
   }
 };
 
+
+const getTanksForEstablishment = async (req, res) => {
+
+    const { establishmentId} = req.params;
+
+    if(!establishmentId)
+    {
+        return res.status(400).json({message:'Establishment ID required'});
+    }
+
+    try {
+        const tanks = await Tank.findAll({
+            where: {
+                EstablishmentId: establishmentId
+            }
+        });
+
+        res.json(tanks);
+    } catch (error) {
+        console.error('Error fetching tanks:', error);
+        res.status(500).json({ message: 'Error fetching tanks', error });
+    }
+};
   
  
 
@@ -127,8 +150,7 @@ const getUserTokensForEstablishment = async (req, res) => {
         where: {
           UserId: userId,  // Use the userId from request parameters
           EstablishmentId: establishmentId
-        },
-        include: [Establishment] // Include the Establishment model
+        }
       });
   
       res.json(tokens);
@@ -138,4 +160,4 @@ const getUserTokensForEstablishment = async (req, res) => {
     }
   };
   
-module.exports = { getUsers, createUser, loginUser ,getUserTokensForEstablishment};
+module.exports = { getUsers, createUser, loginUser ,getUserTokensForEstablishment, getTanksForEstablishment};
