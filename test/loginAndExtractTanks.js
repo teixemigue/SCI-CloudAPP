@@ -7,8 +7,8 @@ const tanksEndpoint = '/user/establishment/:establishmentId/tanks';
 const loginUser = async () => {
   try {
     const loginResponse = await axios.post(`${apiUrl}${loginEndpoint}`, {
-      username: 'user',  // Change to the username you want to test
-      password: 'userpass' // Change to the user's password
+      username: 'admin',  // Change to the username you want to test
+      password: 'admin' // Change to the user's password
     });
 
     console.log('Login response:', loginResponse.data);  // Log the entire response

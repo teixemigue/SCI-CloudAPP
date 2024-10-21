@@ -16,7 +16,7 @@ const Tank = sequelize.define('Tank', {
   beerPressure:{
     type:DataTypes.INTEGER,
     allowNull:true,
-    defaultValue:0
+    defaultValue:1
   },
   temp:{
     type:DataTypes.FLOAT,

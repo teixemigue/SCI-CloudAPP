@@ -9,7 +9,7 @@ const Establishment = sequelize.define('Establishment', {
   },
   address: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: false
   },
   OwnerId: {
     type: DataTypes.INTEGER,
