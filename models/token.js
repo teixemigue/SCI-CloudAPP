@@ -1,12 +1,7 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../dB/database'); // Adjust path as necessary
+const { sequelize } = require('../dB/database');
 
-// Define the Token model
 const Token = sequelize.define('Token', {
-  quantity: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
   status:{
     type:DataTypes.STRING,
     allowNull: false

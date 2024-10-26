@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../dB/database'); // Adjust path as necessary
+const { sequelize } = require('../dB/database');
 
 // Define the Token model
 const Tank = sequelize.define('Tank', {
@@ -12,11 +12,6 @@ const Tank = sequelize.define('Tank', {
     type:DataTypes.INTEGER,
     allowNull: true,
     defaultValue: 0
-  },
-  beerPressure:{
-    type:DataTypes.INTEGER,
-    allowNull:true,
-    defaultValue:1
   },
   temp:{
     type:DataTypes.FLOAT,
@@ -32,5 +27,6 @@ const Tank = sequelize.define('Tank', {
     }
   }
 });
+
 
 module.exports = { Tank };

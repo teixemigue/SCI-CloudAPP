@@ -11,13 +11,9 @@ const Establishment = sequelize.define('Establishment', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  OwnerId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'Users', 
-      key: 'id'
-    }
+  price: {
+    type: DataTypes.FLOAT,
+    allowNull: false
   }
 });
 

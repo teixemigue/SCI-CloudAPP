@@ -1,8 +1,12 @@
-const { sequelize} = require('./dB/database');
-const {User} = require('./models/user')
-const { Token} = require('./models/token');
-const {Establishment} =require('./models/establishment');
-const {Tank} = require('./models/tank');
+const { sequelize } = require('./dB/database');
+const { User } = require('./models/user');
+const { Token } = require('./models/token');
+const { Establishment } = require('./models/establishment');
+const { Tank } = require('./models/tank');
+const { EstablishmentStaff } = require('./models/establishmentStaff');
+const { TankTemperatureHistory } = require('./models/tankTemperatureHistory');
+const { TankBeerServedHistory } = require('./models/tankBeerServedHistory');
+const { TankLevelHistory } = require('./models/tankLevelHistory');
 const bcrypt = require('bcryptjs');
 
 const seedDatabase = async () => {
@@ -40,50 +44,67 @@ const seedDatabase = async () => {
       {
         name: 'Beer Station A',
         address: 'Street of siga siga',
-        OwnerId: adminUser.id
+        price: 10.00 // Make sure to include price since it's in your model
       },
       {
         name: 'Beer Station B',
         address: 'Street of good life',
-        OwnerId: adminUser.id
+        price: 12.50 // Make sure to include price since it's in your model
       }
     ]);
 
     const establishmentA = establishments[0];  // First establishment
     const establishmentB = establishments[1];  // Second establishment
 
+    await EstablishmentStaff.bulkCreate([
+      { userId: adminUser.id, establishmentId: establishmentA.id },
+      { userId: adminUser.id, establishmentId: establishmentB.id },
+      { userId: regularUser.id, establishmentId: establishmentA.id },
+    ]);
+
     // Insert some initial tokens for the users and establishments
     await Token.bulkCreate([
       {
-        quantity: 100,
         status: 'Device',
         UserId: adminUser.id, 
         EstablishmentId: establishmentA.id  // Establishment A
       },
       {
-        quantity: 50,
         status: 'Cup',
         UserId: regularUser.id, 
-        EstablishmentId: establishmentA.id  // Establishment B
+        EstablishmentId: establishmentA.id  // Establishment A
       }
     ]);
 
     await Tank.bulkCreate([
-        {
-          level: 1.0,
-          beersServed: 0,
-          beerPressure: 1, 
-          Temp: 2.0,
-          EstablishmentId: establishmentA.id
-        },
-        {
-          level: 2.0,
-          beersServed: 2,
-          beerPressure: 2, 
-          Temp: 20.0,
-          EstablishmentId: establishmentB.id
-        }
-      ]);
+      {
+        level: 1.0,
+        beersServed: 0,
+        Temp: 2.0,
+        EstablishmentId: establishmentA.id
+      },
+      {
+        level: 2.0,
+        beersServed: 2,
+        Temp: 20.0,
+        EstablishmentId: establishmentB.id
+      }
+    ]);
+
+    // Create initial Tank History records if needed
+    // Example:
+    await TankTemperatureHistory.bulkCreate([
+      {
+        tankId: 1, // Assuming this corresponds to Tank A
+        datetime: new Date(),
+        temperature: 5.0
+      },
+      {
+        tankId: 2, // Assuming this corresponds to Tank B
+        datetime: new Date(),
+        temperature: 10.0
+      }
+    ]);
 
     console.log('Database seeded successfully!');
     process.exit(0); 

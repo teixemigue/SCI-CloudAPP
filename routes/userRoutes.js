@@ -8,6 +8,9 @@ const router = express.Router();
 router.post('/register', createUser);
 router.post('/login', loginUser);
 
+
+
+
 // Protected routes (token required)
 router.get('/user/establishment/:establishmentId', authenticateToken, getUserTokensForEstablishment);
 router.get('/user/establishment/:establishmentId/tanks', authenticateToken, getTanksForEstablishment);
@@ -16,14 +19,17 @@ router.post('/user/establishment/add/tank',authenticateToken,createNewTankForEst
 router.post('/user/establishment/:establishmentId/tokens/create',authenticateToken,createNewTokenUserEstablishment);
 router.post('/user/token/add/:tokenId', authenticateToken, addTokenQuantity);
 router.post('/user/token/subtract/:tokenId', authenticateToken, subtractTokenQuantity);
-router.post('/tank/update/:tankId', authenticateToken, updateTank); // Update tank route
-router.put('/user/token/update/:tokenId', authenticateToken, updateTokenStatus); // Update token status route
+router.post('/tank/update/:tankId', authenticateToken, updateTank);
+router.put('/user/token/update/:tokenId', authenticateToken, updateTokenStatus);
+
 
 
 
 //Admin routes
 router.get('/info/users', authenticateToken, authorizeRoles('admin'), getUsers);
 router.get('/info/establishments',authenticateToken,authorizeRoles('admin'),getAllEstablhisments);
+
+
 
 
 

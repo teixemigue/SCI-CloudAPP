@@ -3,14 +3,32 @@ const { User } = require('./user');
 const { Token } = require('./token'); 
 const { Establishment } = require('./establishment'); 
 const { Tank } = require('./tank');
+const { EstablishmentStaff } = require('./establishmentStaff');
+const { TankTemperatureHistory } = require('./tankTemperatureHistory');
+const { TankBeerServedHistory } = require('./tankBeerServedHistory');
+const { TankLevelHistory } = require('./tankLevelHistory');
 
+// Token relationships
+User.hasMany(Token);
+Token.belongsTo(User);
+Token.belongsTo(Establishment);
 
-User.hasMany(Token); 
-Token.belongsTo(User); 
-Token.belongsTo(Establishment); 
-
+// Establishment and Tank relationships
 Establishment.hasMany(Tank);
 Tank.belongsTo(Establishment);
-Establishment.belongsTo(User);
 
-module.exports = {sequelize,User, Establishment, Token , Tank};
+// Many-to-many relationship through EstablishmentStaff
+User.belongsToMany(Establishment,{ through: EstablishmentStaff });
+Establishment.belongsToMany(User,{ through: EstablishmentStaff });
+
+// Tank and historical data relationships
+Tank.hasMany(TankTemperatureHistory);
+Tank.hasMany(TankLevelHistory);
+Tank.hasMany(TankBeerServedHistory);
+
+TankTemperatureHistory.belongsTo(Tank);
+TankLevelHistory.belongsTo(Tank);
+TankBeerServedHistory.belongsTo(Tank);
+
+// Export models and sequelize connection
+module.exports = { sequelize, User, Establishment, Token, Tank, EstablishmentStaff, TankTemperatureHistory, TankLevelHistory, TankBeerServedHistory };
