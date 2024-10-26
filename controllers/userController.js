@@ -16,7 +16,7 @@ const getUsers = async (req, res) => {
         attributes: ['id', 'username', 'email', 'role', 'createdAt', 'updatedAt'],
         include: [{
           model: Token,
-          attributes: ['id', 'quantity', 'EstablishmentId', 'createdAt', 'updatedAt']
+          attributes: ['id', 'EstablishmentId', 'createdAt', 'updatedAt']
         }]
       });
   
@@ -29,7 +29,7 @@ const getUsers = async (req, res) => {
         updatedAt: user.updatedAt,
         tokens: user.Tokens.map(token => ({
           id: token.id,
-          quantity: token.quantity,
+          userId: token.userId,
           establishmentId: token.EstablishmentId,
           createdAt: token.createdAt,
           updatedAt: token.updatedAt
