@@ -25,12 +25,10 @@ const refreshToken = async (req, res) => {
       }
         
   
-      // Generate new tokens
       const newAccessToken = jwt.sign({ userId: user.userId, role: user.role }, accessKey, { expiresIn: '15m' });
       const newRefreshToken = jwt.sign({ userId: user.userId, role: user.role }, refreshKey, { expiresIn: '30m' });
 
 
-      //need to generate new refresh token
   
       res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
     });

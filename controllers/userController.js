@@ -1,5 +1,5 @@
 
-const {User,Token,Establishment,Tank} = require('../models/relations')
+const {User,Token,Establishment,Tank,EstablishmentStaff, TankBeerServedHistory, TankLevelHistory, TankTemperatureHistory} = require('../models/relations')
 const bcrypt = require('bcryptjs');  // For hashing passwords
 const jwt = require('jsonwebtoken');  // For JWT tokens
 const config = require('../auth/auth.json');
@@ -36,12 +36,11 @@ const getUsers = async (req, res) => {
         }))
       }));
   
-      // Log detailed information
       console.log('User Info:');
       formattedUsers.forEach(user => {
-        console.log(`User: ${user.username}, Tokens:`);
+        console.log('User: ${user.username}, Tokens:');
         user.tokens.forEach(token => {
-          console.log(`  - Token ID: ${token.id}, Quantity: ${token.quantity}, Establishment ID: ${token.establishmentId}, Created At: ${token.createdAt}`);
+          console.log('  - Token ID: ${token.id}, Quantity: ${token.quantity}, Establishment ID: ${token.establishmentId}, Created At: ${token.createdAt}');
         });
       });
   
@@ -62,7 +61,7 @@ const createUser = async (req, res) => {
 
     if(role != 'admin' && role!='user')
     {
-        res.status(404).json({error: 'not found'})
+        res.status(404).json({error: 'Role not recognized'})
         return;
     }
 
@@ -70,7 +69,7 @@ const createUser = async (req, res) => {
     {
         if(key != config.adminRegistration)
         {
-            res.status(403).json({ error: 'forbidden access' });
+            res.status(403).json({ error: 'You dont have the requirements to create a cloud admin account' });
             return;
         } 
     }
@@ -88,205 +87,246 @@ const createUser = async (req, res) => {
 };
 
 const createNewEstablishment = async (req, res) => {
+  try {
+      const { name, location, price} = req.body;
+      const userId = req.user.userId;
 
-    try {
-        const { name, location } = req.body;
-        const userId = req.user.userId;
+      if (!name || !location || !price) {
+          return res.status(400).json({ error: "Name, location and price are required" });
+      }
 
-        if (!name || !location) {
-            return res.status(400).json({ error: "Name and location are required" });
-        }
+      // Create a new establishment
+      const newEstablishment = await Establishment.create({
+          name: name,
+          address: location,
+          price: price  
+      });
 
-        // Insert new establishment into the database using Sequelize
-        const newEstablishment = await Establishment.create({
-            name:name,
-            address:location,
-            OwnerId:userId
-        });
+      // Add the user as part of the establishment's staff
+      await EstablishmentStaff.create({
+          userId: userId,
+          establishmentId: newEstablishment.id,
+          role:'owner'
+      });
 
-        return res.status(201).json({
-            message: "Establishment added successfully",
-            establishmentId: newEstablishment.id,  // ID of the new establishment
-            name: newEstablishment.name,
-            location: newEstablishment.location
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: "Internal server error" });
-    }
-    
-}
+      return res.status(201).json({
+          message: "Establishment added successfully",
+          establishmentId: newEstablishment.id, 
+          name: newEstablishment.name,
+          location: newEstablishment.address
+      });
+  } catch (error) {
+      console.error("Error creating establishment:", error);
+      return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+
 
 const createNewTankForEstablishment = async (req, res) => {
+  try {
+      const { establishmentName } = req.body;
+      const userId = req.user.userId;
 
-    try {
-        const { establishmentId } = req.params;
-        const userId = req.user.userId;
+      if (!establishmentName || !userId) {
+          return res.status(400).json({ error: "User and Establishment are required" });
+      }
 
-        if (!establishmentId || !userId) {
-            return res.status(400).json({ error: "User and Establishment are required" });
-        }
+      const establishment = await Establishment.findOne({
+          where: {name: establishmentName}
+      });
 
-        const establishment = await Establishment.findOne({
-            where: {
-                id: establishmentId,
-                OwnerId: ownerId // Check that the user is the owner
-            },
-            attributes: ['id', 'name', 'address', 'OwnerId'] 
-            });
+      if(!establishment)
+      {
+        return res.status(404).json({ error: "Establishment not found" });
+      }
+      // Check if the user is associated with the establishment as part of the staff
+      const staffAssociation = await EstablishmentStaff.findOne({
+          where: { userId, establishmentId: establishment.id }
+      });
+
+      if (!staffAssociation) {
+          return res.status(403).json({ error: "Forbidden: You are not authorized to add a tank to this establishment." });
+      }
+
+      if(staffAssociation.role != 'owner' && req.user.role != 'admin')
+      {
+        return res.status(403).json({ error: "Forbidden: You are not authorized to add a tank to this establishment, you are not the owner." });
+      }
       
-          if (!establishment) {
-            return res.status(403).json({ error: "Forbidden: You are not the owner of this establishment." });
-          }
+      const newTank = await Tank.create({
+          level: 0,
+          beersServed: 0,
+          temp: 0,
+          EstablishmentId: establishment.id
+      });
 
-        // Insert new establishment into the database using Sequelize
-        const newEstablishment = await Tank.create({
-            level:0,
-            beersServed:0,
-            beerPressure:1,
-            temp:0,
-            EstablishmentId:establishmentId
-        });
+      return res.status(201).json({
+          message: `Tank added successfully to establishment ${establishment.name}`,
+          tankId: newTank.id,
+          level: newTank.level,
+          beersServed: newTank.beersServed,
+          temp: newTank.temp
+      });
+  } catch (error) {
+      console.error("Error adding new tank:", error);
+      return res.status(500).json({ error: "Internal server error" });
+  }
+};
 
-        return res.status(201).json({
-            message: "Tank added successfully to "+establishment.name,
-            establishmentId: newEstablishment.id,  // ID of the new establishment
-            name: newEstablishment.name,
-            location: newEstablishment.location
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: "Internal server error" });
-    }
+const addStaffEstablishment = async (req, res) =>{
     
-}
+  const { establishmentId } = req.params;
+  const { clientId } = req.body;
+  const userId = req.user.userId;
+
+  if (!establishmentId || !clientId) {
+      return res.status(400).json({ error: "Client and Establishment are required" });
+  }
+
+
+  
+  try {
+    const staffAssociation = await EstablishmentStaff.findOne({
+        where: { userId, establishmentId }
+    });
+
+    if ((!staffAssociation || staffAssociation.role != 'owner' ) && req.user.role != 'admin') {
+        return res.status(403).json({ error: "Forbidden: You are not authorized" });
+    }
+
+    await EstablishmentStaff.create({
+      userId: clientId,
+      establishmentId: establishmentId,
+      role:'staff'
+  });
+    
+  } catch (error) {
+      console.error("Error adding staff:", error);
+      return res.status(500).json({ error: "Error adding staff" });
+  }
+
+      
+   
+};
+
 
 const createNewTokenUserEstablishment = async (req, res) => {
+  try {
+      const { establishmentId } = req.params;
+      const { numberTokens, clientId } = req.body;
+      const userId = req.user.userId;
 
-    try {
-        const { establishmentId } = req.params;
-        const {numberTokens,clientId} = req.body;
-        const userId = req.user.userId;
+      if (!establishmentId || !userId) {
+          return res.status(400).json({ error: "User and Establishment are required" });
+      }
 
-        if (!establishmentId || !userId) {
-            return res.status(400).json({ error: "User and Establishment are required" });
-        }
+      if (!numberTokens || numberTokens <= 0) {
+          return res.status(400).json({ error: "Number of tokens must be greater than zero" });
+      }
 
-        const establishment = await Establishment.findOne({
-            where: {
-                id: establishmentId,
-                OwnerId: ownerId // Check that the user is the owner
-            },
-            attributes: ['id', 'name', 'address', 'OwnerId'] 
-            });
       
-          if (!establishment) {
-            return res.status(403).json({ error: "Forbidden: You are not the owner of this establishment." });
+      const createdTokens = [];
+
+      try {
+          for (let i = 0; i < numberTokens; i++) {
+              const token = await Token.create({
+                  status: 'phone',
+                  UserId: clientId,
+                  EstablishmentId: establishmentId
+              });
+              createdTokens.push(token);
           }
+          console.log(`${numberTokens} tokens created successfully`);
+      } catch (error) {
+          console.error("Error creating tokens:", error);
+          return res.status(500).json({ error: "Error creating tokens" });
+      }
 
-        
-        // Insert new establishment into the database using Sequelize
-        const newToken = await Token.create({
-            quantity:numberTokens,
-            status:'active',
-            UserId:clientId,
-            EstablishmentId:establishmentId
-        });
-
-        return res.status(201).json({
-            message: "Tokens given to client"
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: "Internal server error" });
-    }
-    
-}
-
-const addTokenQuantity = async (req, res) => {
-    try {
-        const { tokenId } = req.params; // Token ID from the request parameters
-        const { additionalQuantity } = req.body; // Additional quantity to add
-        // Validate input
-        if (!tokenId || !additionalQuantity || additionalQuantity <= 0) {
-            return res.status(400).json({ error: "Valid  ID and quantity are required." });
-        }
-
-        // Find the token by ID
-        const token = await Token.findOne({ where: { id: tokenId } });
-
-        if (!token) {
-            return res.status(404).json({ error: "Token not found." });
-        }
-
-        // Update the quantity
-        token.quantity += additionalQuantity; // Add the additional quantity
-        await token.save(); // Save the updated token
-
-        return res.status(200).json({
-            message: "Token quantity updated successfully.",
-            updatedQuantity: token.quantity // Return the updated quantity
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: "Internal server error" });
-    }
+      return res.status(201).json({
+          message: `${numberTokens} tokens created successfully for the client`,
+          tokens: createdTokens  
+      });
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Internal server error" });
+  }
 };
 
-const subtractTokenQuantity = async (req, res) => {
-    try {
-        const { tokenId } = req.params; // Token ID from the request parameters
-        const { quantityToSubtract } = req.body; // Quantity to subtract
-        
-        // Validate input
-        if (!tokenId || !quantityToSubtract || quantityToSubtract <= 0) {
-            return res.status(400).json({ error: "Valid token ID and quantity are required." });
-        }
 
-        // Find the token by ID
-        const token = await Token.findOne({ where: { id: tokenId } });
+const consumeToken = async (req, res) => {
+  try {
+      const { tokenId } = req.params;
+      const userId = req.user.userId;
 
-        if (!token) {
-            return res.status(404).json({ error: "Token not found." });
-        }
+      if (!tokenId) {
+          return res.status(400).json({ error: "Token ID is required" });
+      }
 
-        // Check if enough quantity is available
-        if (token.quantity < quantityToSubtract) {
-            return res.status(400).json({ error: "Insufficient token quantity." });
-        }
+      const token = await Token.findOne({
+          where: {
+              id: tokenId,
+              UserId: userId 
+          }
+      });
 
-        // Update the quantity
-        token.quantity -= quantityToSubtract; // Subtract the quantity
-        await token.save(); // Save the updated token
+      if (!token) {
+          return res.status(404).json({ error: "Token not found or you are not authorized to consume it" });
+      }
 
-        return res.status(200).json({
-            message: "Token quantity updated successfully.",
-            updatedQuantity: token.quantity // Return the updated quantity
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: "Internal server error" });
-    }
+      
+      await token.destroy();
+
+      return res.status(200).json({ message: "Token consumed successfully" });
+  } catch (error) {
+      console.error("Error consuming token:", error);
+      return res.status(500).json({ error: "Internal server error" });
+  }
 };
+
+
+const verifyToken = async (req, res) => {
+  try {
+      const { tokenId } = req.params;
+
+      if (!tokenId) {
+          return res.status(400).json({ error: "Token ID is required" });
+      }
+
+      
+      const token = await Token.findOne({
+          where: { id: tokenId }
+      });
+
+      if (token) {
+          return res.status(200).json({ valid: true, message: "Token valid" });
+      } else {
+          return res.status(404).json({ valid: false, message: "Token invalid" });
+      }
+  } catch (error) {
+      console.error("Error checking token existence:", error);
+      return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
 
 
 const updateTank = async (req, res) => {
-    const { tankId } = req.params; // Get the tank ID from the URL
-    const { establishmentId, newData } = req.body; // New data to update the tank
-    const userId = req.user.userId; // Get the user ID from the authenticated token
+    const { tankId } = req.params; 
+    const { establishmentId, level,beersServed,temp } = req.body; 
+    const userId = req.user.userId; 
 
     try {
-        // Find the establishment and verify ownership
-        const establishment = await Establishment.findOne({
-            where: {
-                id: establishmentId,
-                OwnerId: userId // Ensure the user is the owner of the establishment
-            }
-        });
+        
+      const staffAssociation = await EstablishmentStaff.findOne({
+          where: { userId, establishmentId }
+      });
 
-        if (!establishment) {
-            return res.status(403).json({ error: "Forbidden: You are not the owner of this establishment." });
-        }
+      if (!staffAssociation && req.user.role != 'admin') {
+          return res.status(403).json({ error: "Forbidden: You are not authorized to alter tank from this establishment." });
+      }
 
         // Find the tank by its ID
         const tank = await Tank.findOne({
@@ -300,8 +340,42 @@ const updateTank = async (req, res) => {
             return res.status(404).json({ error: "Tank not found." });
         }
 
-        // Update the tank with the new data
-        await tank.update(newData); // Update the tank with the new data provided in the request body
+
+        const updatedFields = {};
+        if (level !== undefined && level != tank.level) {
+
+          updatedFields.level = level;
+          await TankLevelHistory.create({
+            tankId:tank.id,
+            datetime: new Date(),
+            level:level,
+          });
+        }
+          
+          
+        if (beersServed !== undefined && beersServed > 0){
+          updatedFields.beersServed = beersServed + tank.beersServed;
+          await TankBeerServedHistory.create({
+            tankId:tank.id,
+            datetime: new Date(),
+            beerServed:beersServed,
+          });
+        } 
+
+        if (temp !== undefined && temp != tank.temp){
+          updatedFields.temp = temp;
+          await TankTemperatureHistory.create({
+            tankId:tank.id,
+            datetime: new Date(),
+            temperature: temp,
+          });
+        } 
+
+        
+
+        await tank.update(updatedFields);
+
+
 
         return res.status(200).json({ message: "Tank updated successfully.", tank });
     } catch (error) {
@@ -310,7 +384,7 @@ const updateTank = async (req, res) => {
     }
 };
 
-
+//todo
 const updateTokenStatus = async (req, res) => {
     const { tokenId } = req.params; // Get the token ID from the URL
     const { establishmentId, newStatus } = req.body; // New status to update the token
@@ -325,7 +399,7 @@ const updateTokenStatus = async (req, res) => {
             }
         });
 
-        if (!establishment) {
+        if (!establishment && req.user.role != 'admin') {
             return res.status(403).json({ error: "Forbidden: You are not the owner of this establishment." });
         }
 
@@ -360,7 +434,7 @@ const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    // Find user by email
+  
     const user = await User.findOne({ where: { username } });
 
     if (!user) {
@@ -393,7 +467,7 @@ const loginUser = async (req, res) => {
   }
 };
 
-
+//todo
 const getTanksForEstablishment = async (req, res) => {
 
     const { establishmentId} = req.params;
@@ -477,4 +551,4 @@ const getAllEstablhisments = async (req, res) => {
     }
 }
   
-module.exports = { getUsers, createUser, loginUser ,getUserTokensForEstablishment, getTanksForEstablishment, createNewEstablishment,getAllEstablhisments,createNewTankForEstablishment,createNewTokenUserEstablishment,addTokenQuantity,subtractTokenQuantity,updateTank,updateTokenStatus};
+module.exports = { getUsers, createUser, loginUser ,getUserTokensForEstablishment, getTanksForEstablishment, createNewEstablishment,getAllEstablhisments,createNewTankForEstablishment,createNewTokenUserEstablishment,updateTank,updateTokenStatus,consumeToken,verifyToken,addStaffEstablishment};

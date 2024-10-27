@@ -57,9 +57,9 @@ const seedDatabase = async () => {
     const establishmentB = establishments[1];  // Second establishment
 
     await EstablishmentStaff.bulkCreate([
-      { userId: adminUser.id, establishmentId: establishmentA.id },
-      { userId: adminUser.id, establishmentId: establishmentB.id },
-      { userId: regularUser.id, establishmentId: establishmentA.id },
+      { userId: adminUser.id, establishmentId: establishmentA.id , role:'owner'},
+      { userId: adminUser.id, establishmentId: establishmentB.id ,role:'owner'},
+      { userId: regularUser.id, establishmentId: establishmentA.id, role:'staff'},
     ]);
 
     // Insert some initial tokens for the users and establishments

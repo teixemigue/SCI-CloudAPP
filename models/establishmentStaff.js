@@ -17,6 +17,10 @@ const EstablishmentStaff = sequelize.define('EstablishmentStaff', {
       model: 'Establishments', // Ensure this matches the correct model name
       key: 'id'
     }
+  },
+  role:{
+    type: DataTypes.STRING,
+    allowNull: false,
   }
 }, {
   timestamps: true // This ensures createdAt and updatedAt fields are generated
