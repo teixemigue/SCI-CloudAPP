@@ -21,6 +21,10 @@ Tank.belongsTo(Establishment);
 User.belongsToMany(Establishment,{ through: EstablishmentStaff });
 Establishment.belongsToMany(User,{ through: EstablishmentStaff });
 
+EstablishmentStaff.belongsTo(User, { foreignKey: 'userId' });
+User.hasMany(EstablishmentStaff, { foreignKey: 'userId' });
+
+
 // Tank and historical data relationships
 Tank.hasMany(TankTemperatureHistory);
 Tank.hasMany(TankLevelHistory);

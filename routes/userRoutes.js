@@ -1,5 +1,5 @@
 const express = require('express');
-const { getUsers, createUser, loginUser, getUserTokensForEstablishment, getTanksForEstablishment, createNewEstablishment, getAllEstablhisments, createNewTankForEstablishment, createNewTokenUserEstablishment, addTokenQuantity, subtractTokenQuantity, updateTank, updateTokenStatus, consumeToken, verifyToken } = require('../controllers/userController');
+const { getUsers, createUser, loginUser, getUserTokensForEstablishment, getTanksForEstablishment, createNewEstablishment, getAllEstablhisments, createNewTankForEstablishment, createNewTokenUserEstablishment, addTokenQuantity, subtractTokenQuantity, updateTank, updateTokenStatus, consumeToken, verifyToken, getUserInfo, getStaffForEstablishment } = require('../controllers/userController');
 const { authenticateToken, authorizeRoles } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -26,7 +26,8 @@ router.post('/verify/token/:tokenId',authenticateToken,verifyToken);
 router.post('/tank/update/:tankId', authenticateToken, updateTank);
 
 
-
+router.get('/user/myinfo',authenticateToken,getUserInfo);
+router.get('/staff/:establishmentId',authenticateToken,getStaffForEstablishment);
 
 //Admin only routes
 router.get('/info/users', authenticateToken, authorizeRoles('admin'), getUsers);

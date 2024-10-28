@@ -188,12 +188,10 @@ const addStaffEstablishment = async (req, res) =>{
 
   
   try {
-    const staffAssociation = await EstablishmentStaff.findOne({
-        where: { userId, establishmentId }
-    });
-
-    if ((!staffAssociation || staffAssociation.role != 'owner' ) && req.user.role != 'admin') {
-        return res.status(403).json({ error: "Forbidden: You are not authorized" });
+    const isAuthorized = await isOwnerOrAdmin(establishmentId,userId,req.user.role);
+    if(!isAuthorized)
+    {
+      return res.status(404).json({ error: "Forbidden: You are not authorized" });
     }
 
     await EstablishmentStaff.create({
@@ -320,12 +318,10 @@ const updateTank = async (req, res) => {
 
     try {
         
-      const staffAssociation = await EstablishmentStaff.findOne({
-          where: { userId, establishmentId }
-      });
-
-      if (!staffAssociation && req.user.role != 'admin') {
-          return res.status(403).json({ error: "Forbidden: You are not authorized to alter tank from this establishment." });
+      const isAuthorized = await isOwnerOrAdmin(establishmentId,userId,req.user.role);
+      if(!isAuthorized)
+      {
+        return res.status(404).json({ error: "Forbidden: You are not authorized" });
       }
 
         // Find the tank by its ID
@@ -384,7 +380,8 @@ const updateTank = async (req, res) => {
     }
 };
 
-//todo
+
+
 const updateTokenStatus = async (req, res) => {
     const { tokenId } = req.params; // Get the token ID from the URL
     const { establishmentId, newStatus } = req.body; // New status to update the token
@@ -392,15 +389,10 @@ const updateTokenStatus = async (req, res) => {
 
     try {
         // Find the establishment and verify ownership
-        const establishment = await Establishment.findOne({
-            where: {
-                id: establishmentId,
-                OwnerId: userId // Ensure the user is the owner of the establishment
-            }
-        });
-
-        if (!establishment && req.user.role != 'admin') {
-            return res.status(403).json({ error: "Forbidden: You are not the owner of this establishment." });
+        const isAuthorized = await isOwnerOrAdmin(establishmentId,userId,req.user.role);
+        if(!isAuthorized)
+        {
+          return res.status(404).json({ error: "Forbidden: You are not authorized" });
         }
 
         // Find the token by its ID
@@ -425,6 +417,21 @@ const updateTokenStatus = async (req, res) => {
     }
 };
 
+
+const isOwnerOrAdmin = async (establishmentId, userId, userRole) => {
+  
+
+  const staffAssociation = await EstablishmentStaff.findOne({
+    where: { userId, establishmentId }
+  });
+
+  if ((!staffAssociation ) && userRole != 'admin') {
+    return false;
+  }
+
+  
+  return true; // User is either staff or an admin
+};
 
 
 
@@ -467,11 +474,11 @@ const loginUser = async (req, res) => {
   }
 };
 
-//todo
+
 const getTanksForEstablishment = async (req, res) => {
 
     const { establishmentId} = req.params;
-    const ownerId = req.user.userId;
+    const userId = req.user.userId;
 
     if(!establishmentId)
     {
@@ -481,26 +488,18 @@ const getTanksForEstablishment = async (req, res) => {
     try {
 
 
-         // Check if the user is the owner of the establishment
-        const establishment = await Establishment.findOne({
-        where: {
-            id: establishmentId,
-            OwnerId: ownerId // Check that the user is the owner
-        },
-        attributes: ['id', 'name', 'address', 'OwnerId'] 
-        });
-  
-      if (!establishment) {
-        return res.status(403).json({ error: "Forbidden: You are not the owner of this establishment." });
+      const isAuthorized = await isOwnerOrAdmin(establishmentId,userId,req.user.role);
+      if(!isAuthorized)
+      {
+        return res.status(404).json({ error: "Forbidden: You are not authorized" });
       }
 
-
-
-        const tanks = await Tank.findAll({
-            where: {
-                EstablishmentId: establishmentId
-            }
-        });
+    
+      const tanks = await Tank.findAll({
+          where: {
+              EstablishmentId: establishmentId
+          }
+      });
 
         res.json(tanks);
     } catch (error) {
@@ -536,6 +535,60 @@ const getUserTokensForEstablishment = async (req, res) => {
 
 
 
+const getUserInfo = async (req, res) => {
+
+  return res.status(200).json(req.user);
+
+}
+
+const getStaffForEstablishment = async (req, res) => {
+  const { establishmentId } = req.params;
+  const userId = req.user.userId; 
+
+  try {
+    
+    
+
+    const establish = await Establishment.findOne({
+      where: { id:establishmentId }
+    });
+
+    
+
+    const isAuthorized = await isOwnerOrAdmin(establishmentId,userId,req.user.role);
+    if(!isAuthorized)
+    {
+      return res.status(404).json({ error: "Forbidden: You are not authorized" });
+    }
+
+    
+    const staff = await EstablishmentStaff.findAll({
+      where: { establishmentId },
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'username'], 
+        },
+      ],
+      attributes: ['role'],
+    });
+
+    // Format the response to return only the necessary details
+    const staffDetails = staff.map(staffMember => ({
+      id: staffMember.User.id,
+      username: staffMember.User.username,
+      role: staffMember.role
+    }));
+
+    return res.status(200).json(staffDetails);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while retrieving staff.' });
+  }
+};
+
+
+
 
 
 const getAllEstablhisments = async (req, res) => {
@@ -551,4 +604,4 @@ const getAllEstablhisments = async (req, res) => {
     }
 }
   
-module.exports = { getUsers, createUser, loginUser ,getUserTokensForEstablishment, getTanksForEstablishment, createNewEstablishment,getAllEstablhisments,createNewTankForEstablishment,createNewTokenUserEstablishment,updateTank,updateTokenStatus,consumeToken,verifyToken,addStaffEstablishment};
+module.exports = { getUsers, createUser, loginUser ,getUserTokensForEstablishment, getTanksForEstablishment, createNewEstablishment,getAllEstablhisments,createNewTankForEstablishment,createNewTokenUserEstablishment,updateTank,updateTokenStatus,consumeToken,verifyToken,addStaffEstablishment,getUserInfo,getStaffForEstablishment};
