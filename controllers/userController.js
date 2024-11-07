@@ -464,7 +464,7 @@ const loginUser = async (req, res) => {
     const refreshToken = jwt.sign(
         { userId: user.id, role: user.role },  // Store user ID and role in the token
         refreshKey,
-        { expiresIn: '30m' }  // Token expires in 1 hour
+        { expiresIn: '5h' }  
     );
 
     // Send token as the response
