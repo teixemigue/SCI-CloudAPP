@@ -8,9 +8,18 @@ const { TankTemperatureHistory } = require('./models/tankTemperatureHistory');
 const { TankBeerServedHistory } = require('./models/tankBeerServedHistory');
 const { TankLevelHistory } = require('./models/tankLevelHistory');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
+const path = require('path');
 
 const seedDatabase = async () => {
   try {
+
+    const dbFilePath = path.join(__dirname, 'database.sqlite');
+
+    if (fs.existsSync(dbFilePath)) {
+      console.log('Database already exists, skipping seeding.');
+      return; 
+    }
     // Sync the database (force: true drops and recreates the tables)
     await sequelize.sync({ force: true });
 

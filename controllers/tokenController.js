@@ -30,7 +30,7 @@ const refreshToken = async (req, res) => {
 
 
   
-      res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
+      res.status(200).json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
     });
 };
 
