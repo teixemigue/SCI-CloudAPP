@@ -31,7 +31,7 @@ router.get('/staff/:establishmentId',authenticateToken,getStaffForEstablishment)
 
 //Admin only routes
 router.get('/info/users', authenticateToken, authorizeRoles('admin'), getUsers);
-router.get('/info/establishments',authenticateToken,authorizeRoles('admin'),getAllEstablhisments);
+router.get('/info/establishments',authenticateToken,getAllEstablhisments);
 
 
 
