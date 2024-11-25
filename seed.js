@@ -121,7 +121,7 @@ const seedDatabase = async () => {
     // Create sample dates for the last 30 days with multiple entries per day
     const dates = [];
     for (let i = 0; i < 10; i++) {
-      for (let hour = 0; hour < 24; hour++) {
+      for (let hour = 0; hour < 12; hour++) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         date.setHours(hour, 0, 0, 0);
