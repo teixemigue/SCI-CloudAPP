@@ -87,7 +87,7 @@ const seedDatabase = async () => {
     // Create some initial tokens
     const tokens = [];
     const tokenStatuses = ['Active', 'Used', 'Device', 'Cup'];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 10; i++) {
       tokens.push({
         status: tokenStatuses[Math.floor(Math.random() * tokenStatuses.length)],
         UserId: i % 2 === 0 ? adminUser.id : regularUser.id,
@@ -120,7 +120,7 @@ const seedDatabase = async () => {
 
     // Create sample dates for the last 30 days with multiple entries per day
     const dates = [];
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 10; i++) {
       for (let hour = 0; hour < 24; hour++) {
         const date = new Date();
         date.setDate(date.getDate() - i);
