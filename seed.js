@@ -13,17 +13,25 @@ const path = require('path');
 
 const seedDatabase = async () => {
   try {
-    const dbFilePath = path.join(__dirname, 'database.sqlite');
-    
-    // Only sync (without force) if the database exists
-    if (fs.existsSync(dbFilePath)) {
-      await sequelize.sync({ force: false });
-      console.log('Database exists, synced without forcing.');
-      return;
-    }
+    const force = process.argv.includes('--force');
+    console.log('Force mode:', force);
 
-    // If database doesn't exist, create it and seed
-    await sequelize.sync({ force: true });
+    if (force) {
+      console.log('Forcing database reset...');
+      await sequelize.sync({ force: true });
+    } else {
+      const dbFilePath = path.join(__dirname, 'database.sqlite');
+      
+      // Only sync (without force) if the database exists
+      if (fs.existsSync(dbFilePath)) {
+        await sequelize.sync({ force: false });
+        console.log('Database exists, synced without forcing.');
+        return;
+      }
+
+      // If database doesn't exist, create it and seed
+      await sequelize.sync({ force: true });
+    }
 
     // Hash the passwords before inserting them
     const hashedPassword1 = await bcrypt.hash('admin', 10); 
@@ -102,20 +110,60 @@ const seedDatabase = async () => {
       }
     ]);
 
-    // Create initial Tank History records if needed
-    // Example:
-    await TankTemperatureHistory.bulkCreate([
-      {
-        tankId: 1, // Assuming this corresponds to Tank A
-        datetime: new Date(),
-        temperature: 5.0
-      },
-      {
-        tankId: 2, // Assuming this corresponds to Tank B
-        datetime: new Date(),
-        temperature: 10.0
-      }
-    ]);
+    // Create sample dates for the last 7 days
+    const dates = [...Array(7)].map((_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      return date;
+    });
+
+    // Seed temperature history
+    await TankTemperatureHistory.bulkCreate(
+      dates.flatMap(date => [
+        {
+          tankId: 1, // Assuming this corresponds to Tank A
+          datetime: date,
+          temperature: 2.0 + Math.random() * 2 // Random between 2-4°C
+        },
+        {
+          tankId: 2, // Assuming this corresponds to Tank B
+          datetime: date,
+          temperature: 3.0 + Math.random() * 2 // Random between 3-5°C
+        }
+      ])
+    );
+
+    // Seed beer served history
+    await TankBeerServedHistory.bulkCreate(
+      dates.flatMap(date => [
+        {
+          tankId: 1, // Assuming this corresponds to Tank A
+          datetime: date,
+          beerServed: Math.floor(Math.random() * 50) // Random 0-50 beers
+        },
+        {
+          tankId: 2, // Assuming this corresponds to Tank B
+          datetime: date,
+          beerServed: Math.floor(Math.random() * 50) // Random 0-50 beers
+        }
+      ])
+    );
+
+    // Seed level history
+    await TankLevelHistory.bulkCreate(
+      dates.flatMap(date => [
+        {
+          tankId: 1, // Assuming this corresponds to Tank A
+          datetime: date,
+          level: 0.7 + Math.random() * 0.3 // Random between 70-100%
+        },
+        {
+          tankId: 2, // Assuming this corresponds to Tank B
+          datetime: date,
+          level: 0.6 + Math.random() * 0.4 // Random between 60-100%
+        }
+      ])
+    );
 
     console.log('Database seeded successfully!');
     process.exit(0); 

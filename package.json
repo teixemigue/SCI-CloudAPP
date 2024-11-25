@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "seed": "node seed.js",
+    "reseed": "node seed.js --force",
     "start": "npm run seed && node index.js"
   },
   "keywords": [],

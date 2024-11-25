@@ -2,7 +2,8 @@ const { sequelize } = require('./dB/database');
 const express = require('express');
 const bodyParser = require('body-parser');
 const userRoutes = require('./routes/userRoutes');
-const tokenRoutes = require('./routes/tokenRoutes')
+const tokenRoutes = require('./routes/tokenRoutes');
+const statisticsRoutes = require('./routes/statisticsRoutes');
 
 
 
@@ -21,6 +22,7 @@ app.use(bodyParser.json());  // Parse JSON request bodies
 // Routes
 app.use('/', userRoutes);
 app.use('/token',tokenRoutes);
+app.use('/statistics',statisticsRoutes);
 // Start the server
 
 
