@@ -58,118 +58,143 @@ const seedDatabase = async () => {
     const adminUser = users[0];  
     const regularUser = users[1]; 
 
-    // Insert some initial establishments
+    // Create Establishments with realistic data
     const establishments = await Establishment.bulkCreate([
       {
-        name: 'Beer Station A',
-        address: 'Street of siga siga',
-        price: 10.00 // Make sure to include price since it's in your model
+        name: 'The Hoppy Brewer',
+        address: '123 Craft Beer St',
+        price: 8.50
       },
       {
-        name: 'Beer Station B',
-        address: 'Street of good life',
-        price: 12.50 // Make sure to include price since it's in your model
+        name: 'Beer Garden Central',
+        address: '456 Pub Lane',
+        price: 7.00
+      },
+      {
+        name: 'Brewery & Co.',
+        address: '789 Ale Avenue',
+        price: 9.00
       }
     ]);
 
-    const establishmentA = establishments[0];  // First establishment
-    const establishmentB = establishments[1];  // Second establishment
-
+    // Create EstablishmentStaff relationships
     await EstablishmentStaff.bulkCreate([
-      { userId: adminUser.id, establishmentId: establishmentA.id , role:'owner'},
-      { userId: adminUser.id, establishmentId: establishmentB.id ,role:'owner'},
-      { userId: regularUser.id, establishmentId: establishmentA.id, role:'staff'},
+      { userId: adminUser.id, establishmentId: establishments[0].id, role: 'owner' },
+      { userId: adminUser.id, establishmentId: establishments[1].id, role: 'owner' },
+      { userId: regularUser.id, establishmentId: establishments[0].id, role: 'staff' }
     ]);
 
-    // Insert some initial tokens for the users and establishments
-    await Token.bulkCreate([
+    // Create some initial tokens
+    const tokens = [];
+    const tokenStatuses = ['Active', 'Used', 'Device', 'Cup'];
+    for (let i = 0; i < 20; i++) {
+      tokens.push({
+        status: tokenStatuses[Math.floor(Math.random() * tokenStatuses.length)],
+        UserId: i % 2 === 0 ? adminUser.id : regularUser.id,
+        EstablishmentId: establishments[Math.floor(Math.random() * establishments.length)].id
+      });
+    }
+    await Token.bulkCreate(tokens);
+
+    // Create Tanks for each establishment
+    const tanks = await Tank.bulkCreate([
       {
-        status: 'Device',
-        UserId: adminUser.id, 
-        EstablishmentId: establishmentA.id  // Establishment A
+        level: 0.85,
+        beersServed: 150,
+        Temp: 3.0,
+        EstablishmentId: establishments[0].id
       },
       {
-        status: 'Cup',
-        UserId: regularUser.id, 
-        EstablishmentId: establishmentA.id  // Establishment A
+        level: 0.92,
+        beersServed: 80,
+        Temp: 2.8,
+        EstablishmentId: establishments[0].id
+      },
+      {
+        level: 0.76,
+        beersServed: 220,
+        Temp: 3.2,
+        EstablishmentId: establishments[1].id
       }
     ]);
 
-    await Tank.bulkCreate([
-      {
-        level: 1.0,
-        beersServed: 0,
-        Temp: 2.0,
-        EstablishmentId: establishmentA.id
-      },
-      {
-        level: 2.0,
-        beersServed: 2,
-        Temp: 20.0,
-        EstablishmentId: establishmentB.id
+    // Create sample dates for the last 30 days with multiple entries per day
+    const dates = [];
+    for (let i = 0; i < 30; i++) {
+      for (let hour = 0; hour < 24; hour++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        date.setHours(hour, 0, 0, 0);
+        dates.push(date);
       }
-    ]);
+    }
 
-    // Create sample dates for the last 7 days
-    const dates = [...Array(7)].map((_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      return date;
-    });
+    // Your existing helper functions
+    const generateTemperature = (baseTemp, hour) => {
+      const timeVariation = Math.sin(hour * Math.PI / 12) * 0.5;
+      const randomVariation = (Math.random() - 0.5) * 0.3;
+      return baseTemp + timeVariation + randomVariation;
+    };
 
-    // Seed temperature history
-    await TankTemperatureHistory.bulkCreate(
-      dates.flatMap(date => [
-        {
-          tankId: 1, // Assuming this corresponds to Tank A
-          datetime: date,
-          temperature: 2.0 + Math.random() * 2 // Random between 2-4°C
-        },
-        {
-          tankId: 2, // Assuming this corresponds to Tank B
-          datetime: date,
-          temperature: 3.0 + Math.random() * 2 // Random between 3-5°C
+    const generateBeerServed = (hour, dayOfWeek) => {
+      let baseAmount = 0;
+      const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Friday or Saturday
+      
+      if (hour >= 12 && hour <= 15) { // Lunch
+        baseAmount = Math.floor(Math.random() * 10) + (isWeekend ? 10 : 5);
+      } else if (hour >= 17 && hour <= 23) { // Evening
+        baseAmount = Math.floor(Math.random() * 20) + (isWeekend ? 15 : 10);
+      } else if (hour >= 0 && hour <= 2) { // Late night
+        baseAmount = Math.floor(Math.random() * 15) + (isWeekend ? 10 : 5);
+      } else { // Other times
+        baseAmount = Math.floor(Math.random() * 5);
+      }
+      return baseAmount;
+    };
+
+    // Initialize tank levels
+    let tankLevels = tanks.map(() => 1.0);
+
+    // Create histories for each tank
+    for (const date of dates) {
+      const dayOfWeek = date.getDay();
+      
+      for (let tankIndex = 0; tankIndex < tanks.length; tankIndex++) {
+        const tank = tanks[tankIndex];
+        const beerServed = generateBeerServed(date.getHours(), dayOfWeek);
+        
+        // Update tank level
+        tankLevels[tankIndex] -= beerServed * 0.002;
+        if (tankLevels[tankIndex] < 0.2 && Math.random() < 0.8) {
+          tankLevels[tankIndex] = 1.0; // Refill
         }
-      ])
-    );
+        tankLevels[tankIndex] = Math.max(0.1, Math.min(1.0, tankLevels[tankIndex]));
 
-    // Seed beer served history
-    await TankBeerServedHistory.bulkCreate(
-      dates.flatMap(date => [
-        {
-          tankId: 1, // Assuming this corresponds to Tank A
-          datetime: date,
-          beerServed: Math.floor(Math.random() * 50) // Random 0-50 beers
-        },
-        {
-          tankId: 2, // Assuming this corresponds to Tank B
-          datetime: date,
-          beerServed: Math.floor(Math.random() * 50) // Random 0-50 beers
-        }
-      ])
-    );
+        await Promise.all([
+          TankTemperatureHistory.create({
+            tankId: tank.id,
+            datetime: date,
+            temperature: generateTemperature(3.0, date.getHours())
+          }),
+          TankBeerServedHistory.create({
+            tankId: tank.id,
+            datetime: date,
+            beerServed: beerServed
+          }),
+          TankLevelHistory.create({
+            tankId: tank.id,
+            datetime: date,
+            level: tankLevels[tankIndex]
+          })
+        ]);
+      }
+    }
 
-    // Seed level history
-    await TankLevelHistory.bulkCreate(
-      dates.flatMap(date => [
-        {
-          tankId: 1, // Assuming this corresponds to Tank A
-          datetime: date,
-          level: 0.7 + Math.random() * 0.3 // Random between 70-100%
-        },
-        {
-          tankId: 2, // Assuming this corresponds to Tank B
-          datetime: date,
-          level: 0.6 + Math.random() * 0.4 // Random between 60-100%
-        }
-      ])
-    );
-
-    console.log('Database seeded successfully!');
-    process.exit(0); 
+    console.log('Database seeded with realistic mock data!');
+    process.exit(0);
   } catch (err) {
     console.error('Error seeding the database:', err);
-    process.exit(1);  // Exit with failure
+    process.exit(1);
   }
 };
 
