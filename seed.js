@@ -13,14 +13,16 @@ const path = require('path');
 
 const seedDatabase = async () => {
   try {
-
     const dbFilePath = path.join(__dirname, 'database.sqlite');
-
+    
+    // Only sync (without force) if the database exists
     if (fs.existsSync(dbFilePath)) {
-      console.log('Database already exists, skipping seeding.');
-      return; 
+      await sequelize.sync({ force: false });
+      console.log('Database exists, synced without forcing.');
+      return;
     }
-    // Sync the database (force: true drops and recreates the tables)
+
+    // If database doesn't exist, create it and seed
     await sequelize.sync({ force: true });
 
     // Hash the passwords before inserting them
