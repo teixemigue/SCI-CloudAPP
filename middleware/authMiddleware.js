@@ -1,24 +1,37 @@
 const jwt = require('jsonwebtoken');
 const config = require('../auth/auth.json');
 const secretKey = config.accessKey;
+const specialUserKey = config.specialUser;
 
+exports.authenticateToken = async (req, res, next) => {
+  try {
+    // First check if it's the special user
+    const specialUser = req.headers['special-key']; 
+    if (specialUser === specialUserKey) { 
+      req.user = {
+        id: 'special',
+        role: 'special'
+      };
+      return next();
+    }
 
-exports.authenticateToken = (req, res, next) => {
+    // Regular authentication logic
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
-    if (!token) return res.status(401).json({ message: 'Access Token missing' });
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
 
+    // Rest of your existing auth logic...
     jwt.verify(token, secretKey, (err, user) => {
-        if (err) return res.status(403).json({ message: 'Invalid token' });
-
-        // Token is valid, attach user info to the request object
-        console.log("Valid token, attaching user");
-        console.log("user:",user);
-        req.user = user;
-
-        next(); 
+      if (err) return res.status(403).json({ message: 'Invalid token' });
+      req.user = user;
+      next();
     });
+  } catch (error) {
+    res.status(500).json({ message: 'Authentication error' });
+  }
 };
 
 
