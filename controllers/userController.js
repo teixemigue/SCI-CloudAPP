@@ -392,7 +392,7 @@ const updateTokenStatus = async (req, res) => {
         const isAuthorized = await isOwnerOrAdmin(establishmentId,userId,req.user.role);
         if(!isAuthorized)
         {
-          return res.status(404).json({ error: "Forbidden: You are not authorized" });
+          return res.status(403).json({ error: "Forbidden: You are not authorized" });
         }
 
         // Find the token by its ID
@@ -468,8 +468,9 @@ const loginUser = async (req, res) => {
     );
 
     // Send token as the response
-    res.json({ accessToken:accessToken, refreshToken:refreshToken});
+    res.json({ accessToken:accessToken, refreshToken:refreshToken,UserId:user.id});
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: 'Login failed' });
   }
 };
