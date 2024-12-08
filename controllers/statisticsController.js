@@ -159,7 +159,52 @@ const getEstablishmentStats = async (req, res) => {
     }
 };
 
+// Get all temperature history for a specific tank
+const getTankTemperatureHistory = async (req, res) => {
+    try {
+        const { tankId } = req.params;
+        const history = await TankTemperatureHistory.findAll({
+            where: { tankId }
+        });
+        res.json(history);
+    } catch (error) {
+        console.error('Error fetching temperature history:', error);
+        res.status(500).json({ error: 'Failed to fetch temperature history' });
+    }
+};
+
+// Get all beer served history for a specific tank
+const getTankBeerServedHistory = async (req, res) => {
+    try {
+        const { tankId } = req.params;
+        const history = await TankBeerServedHistory.findAll({
+            where: { tankId }
+        });
+        res.json(history);
+    } catch (error) {
+        console.error('Error fetching beer served history:', error);
+        res.status(500).json({ error: 'Failed to fetch beer served history' });
+    }
+};
+
+// Get all level history for a specific tank
+const getTankLevelHistory = async (req, res) => {
+    try {
+        const { tankId } = req.params;
+        const history = await TankLevelHistory.findAll({
+            where: { tankId }
+        });
+        res.json(history);
+    } catch (error) {
+        console.error('Error fetching level history:', error);
+        res.status(500).json({ error: 'Failed to fetch level history' });
+    }
+};
+
 module.exports = {
     getTankStats,
-    getEstablishmentStats
+    getEstablishmentStats,
+    getTankTemperatureHistory,
+    getTankBeerServedHistory,
+    getTankLevelHistory
 };

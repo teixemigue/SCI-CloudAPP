@@ -1,0 +1,537 @@
+openapi: 3.0.0
+info:
+  title: Establishment API
+  version: 1.0.0
+  description: API for managing users, establishments, tanks, and tokens
+
+servers:
+  - url: http://localhost:3000
+    description: Local server
+  - url: https://sci-cloudapp.onrender.com
+    description: API server
+
+paths:
+  /register:
+    post:
+      summary: Register a new user
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [admin, user]
+                key:
+                  type: string
+              required: [username, email, password, role]
+      responses:
+        "201":
+          description: User created successfully
+        "404":
+          description: Role not recognized
+        "403":
+          description: Admin registration requirements not met
+
+  /login:
+    post:
+      summary: Login a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required: [username, password]
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        "401":
+          description: Invalid credentials
+
+  /info/users:
+    get:
+      summary: Get all users (Admin + Special Auth)
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      responses:
+        "200":
+          description: List of users returned successfully
+        "403":
+          description: Forbidden - Requires proper authentication
+        "500":
+          description: Error fetching users
+
+  /info/establishments:
+    get:
+      summary: Get all establishments (Admin only)
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      responses:
+        "200":
+          description: List of establishments returned successfully
+        "403":
+          description: Forbidden - Requires proper authentication
+        "500":
+          description: Error fetching establishments
+
+  /user/establishment/{establishmentId}:
+    get:
+      summary: Get user tokens for an establishment
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      parameters:
+        - in: path
+          name: establishmentId
+          required: true
+          schema:
+            type: integer
+          description: ID of the establishment
+      responses:
+        "200":
+          description: Tokens retrieved successfully
+        "400":
+          description: User ID and Establishment ID required
+        "500":
+          description: Error fetching tokens
+
+  /user/establishment/create:
+    post:
+      summary: Create a new establishment
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                location:
+                  type: string
+                price:
+                  type: number
+              required: [name, location, price]
+      responses:
+        "201":
+          description: Establishment created successfully
+        "500":
+          description: Error creating establishment
+
+  /user/establishment/addTank:
+    post:
+      summary: Add a new tank to an establishment
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                establishmentName:
+                  type: string
+              required: [establishmentName]
+      responses:
+        "201":
+          description: Tank added successfully
+        "403":
+          description: Forbidden - Not authorized
+        "500":
+          description: Error adding new tank
+
+  /user/establishment/{establishmentId}/tokens/create:
+    post:
+      summary: Create new tokens for a user in an establishment
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      parameters:
+        - in: path
+          name: establishmentId
+          required: true
+          schema:
+            type: integer
+          description: ID of the establishment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                numberTokens:
+                  type: integer
+                clientId:
+                  type: integer
+              required: [numberTokens, clientId]
+      responses:
+        "201":
+          description: Tokens created successfully
+        "500":
+          description: Error creating tokens
+
+  /verify/token/{tokenId}:
+    post:
+      summary: Verify if a token is valid
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      parameters:
+        - in: path
+          name: tokenId
+          required: true
+          schema:
+            type: integer
+          description: ID of the token
+      responses:
+        "200":
+          description: Token is valid
+        "404":
+          description: Token invalid
+        "500":
+          description: Error verifying token
+
+  /staff/{establishmentId}:
+    get:
+      summary: Get all staff from an establishment
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      parameters:
+        - in: path
+          name: establishmentId
+          required: true
+          schema:
+            type: integer
+          description: ID of the establishment
+      responses:
+        "200":
+          description: Staff list returned successfully
+        "500":
+          description: Error retrieving staff
+
+  /user/token/update/{tokenId}:
+    post:
+      summary: Update a token's status
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      parameters:
+        - in: path
+          name: tokenId
+          required: true
+          schema:
+            type: integer
+          description: ID of the token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                establishmentId:
+                  type: integer
+                newStatus:
+                  type: string
+      responses:
+        "200":
+          description: Token status updated
+        "403":
+          description: Forbidden - Not the owner
+        "404":
+          description: Token not found
+        "500":
+          description: Error updating token
+
+  /tank/update/{tankId}:
+    post:
+      summary: Update a tank's information and record changes in history
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      parameters:
+        - in: path
+          name: tankId
+          required: true
+          schema:
+            type: integer
+          description: ID of the tank
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                volume:
+                  type: number
+                beersServed:
+                  type: number
+                temperature:
+                  type: number
+                establishmentId:
+                  type: number
+              required: [establishmentId]
+      responses:
+        "200":
+          description: Tank updated successfully, history recorded
+        "404":
+          description: Tank not found
+        "500":
+          description: Error updating tank
+
+  /statistics/tank/{tankId}:
+    get:
+      summary: Get statistics for a specific tank
+      parameters:
+        - in: path
+          name: tankId
+          required: true
+          schema:
+            type: integer
+          description: ID of the tank
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+          description: Start date for statistics (YYYY-MM-DD)
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+          description: End date for statistics (YYYY-MM-DD)
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      responses:
+        "200":
+          description: Tank statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  temperature:
+                    type: object
+                    properties:
+                      avgTemp:
+                        type: number
+                      minTemp:
+                        type: number
+                      maxTemp:
+                        type: number
+                  beerServed:
+                    type: object
+                    properties:
+                      totalBeerServed:
+                        type: number
+                      avgBeerServed:
+                        type: number
+                  level:
+                    type: object
+                    properties:
+                      avgLevel:
+                        type: number
+                      minLevel:
+                        type: number
+                      maxLevel:
+                        type: number
+        "404":
+          description: Tank not found
+        "500":
+          description: Error retrieving statistics
+
+  /statistics/establishment/{establishmentId}:
+    get:
+      summary: Get statistics for an entire establishment
+      parameters:
+        - in: path
+          name: establishmentId
+          required: true
+          schema:
+            type: integer
+          description: ID of the establishment
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+          description: Start date for statistics (YYYY-MM-DD)
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+          description: End date for statistics (YYYY-MM-DD)
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      responses:
+        "200":
+          description: Establishment statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalBeerServed:
+                    type: number
+                    description: Total beer served across all tanks
+                  averageTemperature:
+                    type: number
+                    description: Average temperature across all tanks
+                  averageLevel:
+                    type: number
+                    description: Average level across all tanks
+                  tankCount:
+                    type: integer
+                    description: Total number of tanks in the establishment
+        "404":
+          description: Establishment not found
+        "500":
+          description: Error retrieving statistics
+
+  /statistics/tank/{tankId}/temperature/history:
+    get:
+      summary: Get all temperature history for a specific tank
+      parameters:
+        - in: path
+          name: tankId
+          required: true
+          schema:
+            type: integer
+          description: ID of the tank
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      responses:
+        "200":
+          description: Temperature history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    datetime:
+                      type: string
+                      format: date-time
+                    temperature:
+                      type: number
+        "404":
+          description: Tank not found
+        "500":
+          description: Error retrieving temperature history
+
+  /statistics/tank/{tankId}/beer/served/history:
+    get:
+      summary: Get all beer served history for a specific tank
+      parameters:
+        - in: path
+          name: tankId
+          required: true
+          schema:
+            type: integer
+          description: ID of the tank
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      responses:
+        "200":
+          description: Beer served history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    datetime:
+                      type: string
+                      format: date-time
+                    beerServed:
+                      type: number
+        "404":
+          description: Tank not found
+        "500":
+          description: Error retrieving beer served history
+
+  /statistics/tank/{tankId}/level/history:
+    get:
+      summary: Get all level history for a specific tank
+      parameters:
+        - in: path
+          name: tankId
+          required: true
+          schema:
+            type: integer
+          description: ID of the tank
+      security:
+        - bearerAuth: []
+        - specialAuth: []
+      responses:
+        "200":
+          description: Level history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    datetime:
+                      type: string
+                      format: date-time
+                    level:
+                      type: number
+        "404":
+          description: Tank not found
+        "500":
+          description: Error retrieving level history
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    specialAuth:
+      type: apiKey
+      in: header
+      name: special-key
