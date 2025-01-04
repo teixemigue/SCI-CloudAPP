@@ -228,7 +228,7 @@ const seedDatabase = async () => {
       },
       {
         establishmentName: 'Beer Garden Central',
-        tokenId: 2, // Assuming this token ID exists
+        tokenId: 3, // Assuming this token ID exists
         userId: 1, // Assuming this user ID exists
         usedAt: null // 1 day ago
       }
