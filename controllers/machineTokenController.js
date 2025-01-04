@@ -147,7 +147,7 @@ const handleConfirmation = async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching confirmation:', error);
-        res.status(500).json({ error: 'Failed to fetch confirmation' });
+        return res.status(500).json({ error: 'Failed to fetch confirmation' });
     }
     
     console.log("confirmation:",confirmation)
@@ -159,7 +159,7 @@ const handleConfirmation = async (req, res) => {
     });
 
     if(token.dataValues.status == "Used"){
-        res.status(201).json({ error: 'Token already used' });
+        return res.status(201).json({ error: 'Token already used' });
     }
     
     try {
@@ -168,7 +168,7 @@ const handleConfirmation = async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching request:', error);
-        res.status(500).json({ error: 'Failed to fetch request' });
+        return res.status(500).json({ error: 'Failed to fetch request' });
     }
 
     console.log("request:", request);
