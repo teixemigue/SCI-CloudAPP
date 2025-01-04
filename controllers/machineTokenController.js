@@ -127,8 +127,8 @@ const handleToken = async (req, res) => {
 const handleConfirmation = async (req, res) => {
     const { confirmationId, responseBinary } = req.body;
 
-    if(!responseBinary){
-        return res.status(600).json({message: "Invalid response" });
+    if(responseBinary == null){
+        return res.status(600).json({message: "Invalid response binary" });
 
     }
 

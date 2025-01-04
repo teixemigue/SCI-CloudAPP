@@ -88,7 +88,7 @@ const seedDatabase = async () => {
 
     // Create some initial tokens
     const tokens = [];
-    const tokenStatuses = ['Active', 'Used', 'Device', 'Cup'];
+    const tokenStatuses = ['Active', 'Device', 'Cup'];
     for (let i = 0; i < 10; i++) {
       tokens.push({
         status: tokenStatuses[Math.floor(Math.random() * tokenStatuses.length)],
