@@ -7,7 +7,7 @@ const router = express.Router();
 // Confirmation routes
 router.get('/:userId', authenticateToken,getUserConfirmations );
 
-router.post('/request',authenticateToken,handleToken );
+router.post('/request/:tokenId',authenticateToken,handleToken );
 
 router.get('/request/status/:requestId',authenticateToken,checkRequestStatus);
 

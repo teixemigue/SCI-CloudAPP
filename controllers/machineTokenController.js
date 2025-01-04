@@ -46,7 +46,7 @@ const checkRequestStatus = async (req, res) => {
 
 
 const handleToken = async (req, res) => {
-    const { tokenId } = req.body;
+    const { tokenId } = req.params;
 
     try {
         if (!tokenId) {
