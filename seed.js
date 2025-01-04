@@ -7,6 +7,7 @@ const { EstablishmentStaff } = require('./models/establishmentStaff');
 const { TankTemperatureHistory } = require('./models/tankTemperatureHistory');
 const { TankBeerServedHistory } = require('./models/tankBeerServedHistory');
 const { TankLevelHistory } = require('./models/tankLevelHistory');
+const {Confirmation} = require('./models/confirmation');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
@@ -189,6 +190,31 @@ const seedDatabase = async () => {
         ]);
       }
     }
+
+    // Mock data for confirmations
+    const mockConfirmations = [
+      {
+        establishmentName: 'The Hoppy Brewer',
+        tokenId: 1, // Assuming this token ID exists
+        userId: 1, // Assuming this user ID exists
+        usedAt: null // Current date and time
+      },
+      {
+        establishmentName: 'Beer Garden Central',
+        tokenId: 2, // Assuming this token ID exists
+        userId: 1, // Assuming this user ID exists
+        usedAt: null // 1 day ago
+      }
+    ];
+
+    try {
+      await Confirmation.bulkCreate(mockConfirmations);
+      console.log('Mock confirmations seeded successfully!');
+    } catch (error) {
+      console.error('Error seeding mock confirmations:', error);
+    }
+   
+
 
     console.log('Database seeded with realistic mock data!');
     process.exit(0);

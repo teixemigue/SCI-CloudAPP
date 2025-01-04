@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const userRoutes = require('./routes/userRoutes');
 const tokenRoutes = require('./routes/tokenRoutes');
 const statisticsRoutes = require('./routes/statisticsRoutes');
-
+const confirmationRoutes = require('./routes/machineTokenRoutes');
 
 
 const PORT = process.env.PORT || 3000;
@@ -23,6 +23,7 @@ app.use(bodyParser.json());  // Parse JSON request bodies
 app.use('/', userRoutes);
 app.use('/token',tokenRoutes);
 app.use('/statistics',statisticsRoutes);
+app.use('/confirmations',confirmationRoutes);
 // Start the server
 
 
