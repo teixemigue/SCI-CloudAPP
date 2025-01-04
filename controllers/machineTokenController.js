@@ -136,8 +136,6 @@ const handleConfirmation = async (req, res) => {
         return res.status(404).json({ message: "Invalid ID" });
     }
 
-    
-
     let confirmation;
     let request;
 

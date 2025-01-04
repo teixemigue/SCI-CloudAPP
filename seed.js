@@ -204,7 +204,7 @@ const seedDatabase = async () => {
       {
         "id": 2,
         "status": "pending",
-        "tokenId": 2,
+        "tokenId": 3,
         "userId": 1,
         "createdAt": "2025-01-03T08:30:00Z",
         "updatedAt": "2025-01-03T09:15:00Z"
