@@ -8,6 +8,7 @@ const { TankTemperatureHistory } = require('./models/tankTemperatureHistory');
 const { TankBeerServedHistory } = require('./models/tankBeerServedHistory');
 const { TankLevelHistory } = require('./models/tankLevelHistory');
 const {Confirmation} = require('./models/confirmation');
+const {Request} = require('./models/request');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
@@ -189,6 +190,32 @@ const seedDatabase = async () => {
           })
         ]);
       }
+    }
+
+    const requestMocks = [
+      {
+        "id": 1,
+        "status": "pending",
+        "tokenId": 1,
+        "userId": 1,
+        "createdAt": "2025-01-03T08:30:00Z",
+        "updatedAt": "2025-01-03T09:15:00Z"
+      },
+      {
+        "id": 2,
+        "status": "pending",
+        "tokenId": 2,
+        "userId": 1,
+        "createdAt": "2025-01-03T08:30:00Z",
+        "updatedAt": "2025-01-03T09:15:00Z"
+      }
+    ]
+
+    try {
+      await Request.bulkCreate(requestMocks);
+      console.log('Mock requests seeded successfully!');
+    } catch (error) {
+      console.error('Error seeding mock requests:', error);
     }
 
     // Mock data for confirmations
