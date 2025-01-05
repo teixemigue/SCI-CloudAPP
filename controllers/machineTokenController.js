@@ -24,6 +24,8 @@ const getUserConfirmations = async (req, res) => {
 const checkRequestStatus = async (req, res) => {
     const { requestId } = req.params; // Assuming these are passed as URL parameters
   
+
+    console.log("hardware checkign status")
     try {
       const request = await Request.findOne(
 
@@ -34,8 +36,10 @@ const checkRequestStatus = async (req, res) => {
 
       if(!request)
       {
+        console.log("request not found")
         return res.status(400).json({ error: "Request not found" });
       }else{
+        console.log("sending status of a request")
         return res.status(200).json({status:request.status });
       }
     } catch (error) {
@@ -50,6 +54,7 @@ const handleToken = async (req, res) => {
 
     try {
         if (!tokenId) {
+            console.log("Token not sent")
             return res.status(400).json({ error: "Token ID is required" });
         }
 
@@ -59,6 +64,7 @@ const handleToken = async (req, res) => {
         });
         console.log("token",token)
         if (!token) {
+            console.log("token not found")
             return res.status(404).json({ valid: false, message: "Token invalid" });
         }
 
@@ -72,6 +78,7 @@ const handleToken = async (req, res) => {
         });
 
         if (existingRequest) {
+            console.log("request already exists")
             return res.status(409).json({
                 error: "A pending request already exists for this user and token",
                 requestId: existingRequest.id
@@ -100,6 +107,9 @@ const handleToken = async (req, res) => {
 
         ]);
 
+        console.log("confirmation created")
+        console.log("confirmation:",confirmations)
+
         // Save the new request in the database
         const requests = await Request.bulkCreate([
             {
@@ -110,7 +120,11 @@ const handleToken = async (req, res) => {
         ]);
 
         const requestId = requests[0].id;
+        console.log("request created")
+        console.log("request",requests)
 
+
+        console.log("sent response waiting user")
         return res.status(200).json({
             status: "pending",
             message: "Waiting for user confirmation",
@@ -191,6 +205,7 @@ const handleConfirmation = async (req, res) => {
         where: { id: confirmationId }
     });
 
+    console.log("confiramtion deleted")
     return res.status(200).json({message: message });
 
 
