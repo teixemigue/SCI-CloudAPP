@@ -40,8 +40,8 @@ const checkRequestStatus = async (req, res) => {
         return res.status(400).json({ error: "Request not found" });
       }else{
         console.log("sending status of a request")
-        return res.status(200).json({status:request.status });
-      }
+        return res.status(200).send(request.status);
+    }
     } catch (error) {
       console.error('Error checking confirmation:', error);
       res.status(500).json({ error: 'Failed to check confirmation' });
