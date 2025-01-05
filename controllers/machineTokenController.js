@@ -83,9 +83,10 @@ const handleToken = async (req, res) => {
 
         if (existingRequest) {
             console.log("request already exists")
-            return res.status(200).send(String(existingRequest.id)); 
-
-            
+            return res.status(409).json({
+                error: "A pending request already exists for this user and token",
+                requestId: existingRequest.id
+            });
         }
 
 
@@ -128,8 +129,11 @@ const handleToken = async (req, res) => {
 
 
         console.log("sent response waiting user")
-        return res.status(200).send(String(requestId)); 
-
+        return res.status(200).json({
+            status: "pending",
+            message: "Waiting for user confirmation",
+            requestId
+        });
 
     } catch (error) {
         console.error("Error handling token request:", error);
