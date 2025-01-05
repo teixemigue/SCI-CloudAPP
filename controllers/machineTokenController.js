@@ -40,8 +40,8 @@ const checkRequestStatus = async (req, res) => {
         return res.status(400).json({ error: "Request not found" });
       }else{
         console.log("sending status of a request")
-        return res.status(200).send(request.status);
-    }
+        return res.status(200).json({status:request.status });
+      }
     } catch (error) {
       console.error('Error checking confirmation:', error);
       res.status(500).json({ error: 'Failed to check confirmation' });
@@ -129,11 +129,8 @@ const handleToken = async (req, res) => {
 
 
         console.log("sent response waiting user")
-        return res.status(200).json({
-            status: "pending",
-            message: "Waiting for user confirmation",
-            requestId
-        });
+        return res.status(200).send(requestId);
+
 
     } catch (error) {
         console.error("Error handling token request:", error);
