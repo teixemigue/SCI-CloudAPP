@@ -83,10 +83,8 @@ const handleToken = async (req, res) => {
 
         if (existingRequest) {
             console.log("request already exists")
-            return res.status(409).json({
-                error: "A pending request already exists for this user and token",
-                requestId: existingRequest.id
-            });
+            return res.status(200).send(String(requestId));
+
         }
 
 
