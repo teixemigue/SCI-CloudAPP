@@ -68,6 +68,10 @@ const handleToken = async (req, res) => {
             return res.status(404).json({ valid: false, message: "Token invalid" });
         }
 
+        if(token.dataValues.status == "Used"){
+            return res.status(500).json({ valid: false, message: "Token used" });
+        }
+
         const userId = token.dataValues.UserId;
         // Check if a request for this userId and tokenId already exists
         const existingRequest = await Request.findOne({
