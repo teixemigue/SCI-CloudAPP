@@ -129,7 +129,7 @@ const handleToken = async (req, res) => {
 
 
         console.log("sent response waiting user")
-        return res.status(200).send(requestId);
+        return res.status(200).send(Number(requestId));
 
 
     } catch (error) {
